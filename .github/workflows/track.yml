@@ -2,7 +2,7 @@ name: Track X accounts
 
 on:
   schedule:
-    - cron: "*/5 * * * *"   # 每 5 分鐘
+    - cron: "*/30 * * * *"   # 每 30 分鐘（省 twitterapi.io credit）
   workflow_dispatch:          # 允許在 Actions 分頁手動觸發測試
     inputs:
       force_since:

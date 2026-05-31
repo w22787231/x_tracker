@@ -1,6 +1,6 @@
 {
   "accounts": ["shufen46250836", "aleabitoreddit", "qinbafrank"],
-  "poll_interval_seconds": 60,
+  "poll_interval_seconds": 1800,
   "translate": true,
   "target_lang": "zh-TW"
 }

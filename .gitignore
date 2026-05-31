@@ -1,6 +1,8 @@
 .env
 state.json
-_debug.json
+_*.py
+_*.json
+_*.jpg
 __pycache__/
 *.pyc
 .pytest_cache/
