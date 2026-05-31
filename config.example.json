@@ -1,0 +1,6 @@
+{
+  "accounts": ["elonmusk", "nasa"],
+  "poll_interval_seconds": 60,
+  "translate": true,
+  "target_lang": "zh-TW"
+}

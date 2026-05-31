@@ -1,0 +1,51 @@
+name: Track X accounts
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"   # 每 5 分鐘
+  workflow_dispatch:          # 允許在 Actions 分頁手動觸發測試
+
+# 避免兩次排程重疊執行造成 state 競爭
+concurrency:
+  group: x-tracker
+  cancel-in-progress: false
+
+jobs:
+  track:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: x_tracker
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # 還原上次的去重狀態。key 每次唯一（含 run id），靠 restore-keys 前綴
+      # 命中最近一次的快取；跑完用唯一 key 重新存，確保更新後的 state 被保存。
+      - name: Restore state
+        uses: actions/cache/restore@v4
+        with:
+          path: x_tracker/state.json
+          key: x-tracker-state-${{ github.run_id }}
+          restore-keys: |
+            x-tracker-state-
+
+      - name: Run tracker (single pass)
+        env:
+          TWITTERAPI_IO_KEY: ${{ secrets.TWITTERAPI_IO_KEY }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          STATE_PATH: state.json
+        run: python tracker.py --once
+
+      - name: Save state
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: x_tracker/state.json
+          key: x-tracker-state-${{ github.run_id }}
