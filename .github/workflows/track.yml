@@ -13,9 +13,6 @@ concurrency:
 jobs:
   track:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: x_tracker
     steps:
       - uses: actions/checkout@v4
 
@@ -31,7 +28,7 @@ jobs:
       - name: Restore state
         uses: actions/cache/restore@v4
         with:
-          path: x_tracker/state.json
+          path: state.json
           key: x-tracker-state-${{ github.run_id }}
           restore-keys: |
             x-tracker-state-
@@ -47,5 +44,5 @@ jobs:
         if: always()
         uses: actions/cache/save@v4
         with:
-          path: x_tracker/state.json
+          path: state.json
           key: x-tracker-state-${{ github.run_id }}
