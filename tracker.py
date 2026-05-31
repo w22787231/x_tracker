@@ -78,11 +78,12 @@ def _load_env():
 
 
 def run_once(accounts, api_key, webhook, translate_fn, deps=None, state_path=STATE_PATH,
-             account_delay=3, force_since=""):
+             account_delay=6, force_since=""):
     """Process every account exactly once and persist state. No looping.
 
     Used both by the persistent loop (one iteration) and the cloud --once mode.
-    A small delay between accounts avoids the free-tier rate limit (HTTP 429).
+    A delay between accounts stays under the free-tier rate limit
+    (1 request / 5s), so 6s gives headroom against HTTP 429.
 
     force_since="username=tweet_id" overrides that account's starting point for
     this run only (manual backfill / verification via workflow_dispatch).
