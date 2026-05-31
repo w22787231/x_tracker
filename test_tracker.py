@@ -141,6 +141,46 @@ def test_run_once_first_run_sets_baseline_no_send(tmp_path):
     assert state_mod.load_state(str(state_path)) == {"a": "12"}
 
 
+def test_force_since_overrides_state_for_one_account(tmp_path):
+    # FORCE_SINCE="a=5" makes account a start from since_id=5 this run,
+    # regardless of stored state. Other accounts keep their stored state.
+    state_path = tmp_path / "state.json"
+    import state as state_mod
+    state_mod.save_state(str(state_path), {"a": "100", "b": "100"})
+
+    seen_since = {}
+
+    def get_new(u, since, key):
+        seen_since[u] = since
+        return []
+
+    deps = tracker.Deps(get_new=get_new, translate=lambda t: "x",
+                        send=lambda u, tw, tr: True)
+    tracker.run_once(
+        accounts=["a", "b"], api_key="k", webhook="w",
+        translate_fn=deps.translate, deps=deps,
+        state_path=str(state_path), account_delay=0,
+        force_since="a=5",
+    )
+    assert seen_since["a"] == "5"     # overridden
+    assert seen_since["b"] == "100"   # untouched
+
+
+def test_force_since_blank_is_ignored(tmp_path):
+    state_path = tmp_path / "state.json"
+    import state as state_mod
+    state_mod.save_state(str(state_path), {"a": "100"})
+    seen = {}
+    deps = tracker.Deps(get_new=lambda u, since, key: seen.update({u: since}) or [],
+                        translate=lambda t: "x", send=lambda u, tw, tr: True)
+    tracker.run_once(
+        accounts=["a"], api_key="k", webhook="w",
+        translate_fn=deps.translate, deps=deps,
+        state_path=str(state_path), account_delay=0, force_since="",
+    )
+    assert seen["a"] == "100"
+
+
 def test_run_once_delays_between_accounts_to_avoid_rate_limit(tmp_path):
     # A delay is inserted between accounts (but not before the first) so the
     # free-tier rate limit isn't tripped.

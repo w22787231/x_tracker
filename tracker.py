@@ -78,11 +78,14 @@ def _load_env():
 
 
 def run_once(accounts, api_key, webhook, translate_fn, deps=None, state_path=STATE_PATH,
-             account_delay=3):
+             account_delay=3, force_since=""):
     """Process every account exactly once and persist state. No looping.
 
     Used both by the persistent loop (one iteration) and the cloud --once mode.
     A small delay between accounts avoids the free-tier rate limit (HTTP 429).
+
+    force_since="username=tweet_id" overrides that account's starting point for
+    this run only (manual backfill / verification via workflow_dispatch).
     """
     if deps is None:
         deps = Deps(
@@ -91,6 +94,10 @@ def run_once(accounts, api_key, webhook, translate_fn, deps=None, state_path=STA
         )
 
     st = state.load_state(state_path)
+    if force_since and "=" in force_since:
+        fu, fid = force_since.split("=", 1)
+        st[fu.strip()] = fid.strip()
+
     for idx, username in enumerate(accounts):
         if idx > 0 and account_delay:
             deps.sleep(account_delay)
@@ -136,8 +143,12 @@ def _build_runtime():
 def main_once():
     """Single run — for GitHub Actions / cron. Process once, then exit."""
     accounts, api_key, webhook, _interval, translate_fn = _build_runtime()
+    force_since = os.environ.get("FORCE_SINCE", "")
     print(f"[tracker] 單次檢查 {accounts}（state: {STATE_PATH}）")
-    run_once(accounts, api_key, webhook, translate_fn, state_path=STATE_PATH)
+    if force_since:
+        print(f"[tracker] FORCE_SINCE = {force_since}")
+    run_once(accounts, api_key, webhook, translate_fn, state_path=STATE_PATH,
+             force_since=force_since)
     print("[tracker] 單次檢查完成。")
 
 

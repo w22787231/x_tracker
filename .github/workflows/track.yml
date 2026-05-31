@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: "*/5 * * * *"   # 每 5 分鐘
   workflow_dispatch:          # 允許在 Actions 分頁手動觸發測試
+    inputs:
+      force_since:
+        description: '一次性覆寫起點，格式 username=tweet_id（測試/補發用，留空則照常）'
+        required: false
+        default: ''
 
 # 避免兩次排程重疊執行造成 state 競爭
 concurrency:
@@ -38,6 +43,7 @@ jobs:
           TWITTERAPI_IO_KEY: ${{ secrets.TWITTERAPI_IO_KEY }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           STATE_PATH: state.json
+          FORCE_SINCE: ${{ github.event.inputs.force_since }}
         run: python tracker.py --once
 
       - name: Save state
